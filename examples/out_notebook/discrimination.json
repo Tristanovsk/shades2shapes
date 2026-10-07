@@ -1,0 +1,335 @@
+{
+  "images": [
+    {
+      "source": "/home/harmel/Dropbox/Dropbox/work/git/satellite_app/shades2shapes/examples/N_scintillans.png",
+      "label": "N_scintillans",
+      "channel": "G"
+    },
+    {
+      "source": "/home/harmel/Dropbox/Dropbox/work/git/satellite_app/shades2shapes/examples/Aphanizomenon_sp.png",
+      "label": "Aphanizomenon_sp",
+      "channel": "R"
+    },
+    {
+      "source": "/home/harmel/Dropbox/Dropbox/work/git/satellite_app/shades2shapes/examples/M_rubrum.png",
+      "label": "M_rubrum",
+      "channel": "G"
+    }
+  ],
+  "n_tiles": 347,
+  "ranking": [
+    {
+      "feature": "glcm_contrast",
+      "description": "GLCM contrast (d=1)",
+      "separability": 0.6620494889725659,
+      "mean_pairwise_auc": 0.9052687376725839,
+      "eta2": 0.5792377020675769,
+      "kruskal_H": 219.69004903374503,
+      "kruskal_p": 1.9720230541187172e-48,
+      "mean[N_scintillans]": 6.372359465621197,
+      "sd[N_scintillans]": 5.713507847918241,
+      "mean[Aphanizomenon_sp]": 16.70780442413631,
+      "sd[Aphanizomenon_sp]": 7.668226615155058,
+      "mean[M_rubrum]": 0.6617055618543715,
+      "sd[M_rubrum]": 0.5612004072817958
+    },
+    {
+      "feature": "lbp_entropy",
+      "description": "LBP entropy",
+      "separability": 0.60529854760624,
+      "mean_pairwise_auc": 0.852270037654653,
+      "eta2": 0.3180501283163236,
+      "kruskal_H": 175.37085359090884,
+      "kruskal_p": 8.292834521837733e-39,
+      "mean[N_scintillans]": 3.2059432772261593,
+      "sd[N_scintillans]": 0.06680558618876568,
+      "mean[Aphanizomenon_sp]": 3.2390776223323274,
+      "sd[Aphanizomenon_sp]": 0.016855440077549685,
+      "mean[M_rubrum]": 3.1593155360943888,
+      "sd[M_rubrum]": 0.05529838221900849
+    },
+    {
+      "feature": "glcm_homogeneity",
+      "description": "GLCM homogeneity (d=1)",
+      "separability": 0.563076923076923,
+      "mean_pairwise_auc": 0.8771570736955353,
+      "eta2": 0.6369886095252545,
+      "kruskal_H": 203.5361522374078,
+      "kruskal_p": 6.348719036554102e-45,
+      "mean[N_scintillans]": 0.7010196428288855,
+      "sd[N_scintillans]": 0.11255808868558205,
+      "mean[Aphanizomenon_sp]": 0.4061604422189311,
+      "sd[Aphanizomenon_sp]": 0.17008352664773704,
+      "mean[M_rubrum]": 0.8157317521703683,
+      "sd[M_rubrum]": 0.09401955670609255
+    },
+    {
+      "feature": "glcm_correlation_decay",
+      "description": "GLCM correlation decay (d4/d1)",
+      "separability": 0.37923614846691767,
+      "mean_pairwise_auc": 0.8391209431594047,
+      "eta2": 0.4420954212184698,
+      "kruskal_H": 161.59150760697116,
+      "kruskal_p": 8.144228723313812e-36,
+      "mean[N_scintillans]": 0.6511051589012273,
+      "sd[N_scintillans]": 0.11196954189150832,
+      "mean[Aphanizomenon_sp]": 0.5391169111287679,
+      "sd[Aphanizomenon_sp]": 0.17820628406934821,
+      "mean[M_rubrum]": 0.8369799646907277,
+      "sd[M_rubrum]": 0.08979345632338619
+    },
+    {
+      "feature": "lbp_nonuniform_fraction",
+      "description": "LBP non-uniform pattern fraction",
+      "separability": 0.36951923076923077,
+      "mean_pairwise_auc": 0.8404008651604805,
+      "eta2": 0.46678841515732034,
+      "kruskal_H": 186.76331598341326,
+      "kruskal_p": 2.7852310188420395e-41,
+      "mean[N_scintillans]": 0.17000638521634615,
+      "sd[N_scintillans]": 0.02147313386625061,
+      "mean[Aphanizomenon_sp]": 0.19675514914772727,
+      "sd[Aphanizomenon_sp]": 0.012335165595100074,
+      "mean[M_rubrum]": 0.15691162109375,
+      "sd[M_rubrum]": 0.021679854542065016
+    },
+    {
+      "feature": "lacunarity",
+      "description": "Lacunarity (8 px box)",
+      "separability": 0.35212514757969304,
+      "mean_pairwise_auc": 0.7614343083293148,
+      "eta2": 0.020781117887852325,
+      "kruskal_H": 97.48596719305468,
+      "kruskal_p": 6.779398961942074e-22,
+      "mean[N_scintillans]": 41.53606155435242,
+      "sd[N_scintillans]": 168.8226133731346,
+      "mean[Aphanizomenon_sp]": 10.012466644466162,
+      "sd[Aphanizomenon_sp]": 46.854374171561446,
+      "mean[M_rubrum]": 11.47803746599781,
+      "sd[M_rubrum]": 28.117696492418183
+    },
+    {
+      "feature": "filament_fraction",
+      "description": "Filament area fraction",
+      "separability": 0.16038461538461535,
+      "mean_pairwise_auc": 0.755034516765286,
+      "eta2": 0.4041435570378623,
+      "kruskal_H": 123.12213692816294,
+      "kruskal_p": 1.8380937823434968e-27,
+      "mean[N_scintillans]": 0.07149094801682693,
+      "sd[N_scintillans]": 0.06261780610229188,
+      "mean[Aphanizomenon_sp]": 0.30259608555506995,
+      "sd[Aphanizomenon_sp]": 0.1457878885756615,
+      "mean[M_rubrum]": 0.13120849609375,
+      "sd[M_rubrum]": 0.13836332657821854
+    },
+    {
+      "feature": "skeleton_density",
+      "description": "Skeleton density (px / 1000 px^2)",
+      "separability": 0.13740384615384604,
+      "mean_pairwise_auc": 0.7659179442352518,
+      "eta2": 0.4554523987985526,
+      "kruskal_H": 136.34424266786309,
+      "kruskal_p": 2.4729986827582585e-30,
+      "mean[N_scintillans]": 19.88807091346154,
+      "sd[N_scintillans]": 18.384018475534333,
+      "mean[Aphanizomenon_sp]": 92.75465745192308,
+      "sd[Aphanizomenon_sp]": 47.30271320354359,
+      "mean[M_rubrum]": 31.59912109375,
+      "sd[M_rubrum]": 33.13949489931651
+    },
+    {
+      "feature": "coherence",
+      "description": "Structure-tensor coherence",
+      "separability": 0.09596153846153843,
+      "mean_pairwise_auc": 0.6264454455800609,
+      "eta2": 0.09804579932124496,
+      "kruskal_H": 28.57454387359644,
+      "kruskal_p": 6.239023714680294e-07,
+      "mean[N_scintillans]": 0.5234303837489916,
+      "sd[N_scintillans]": 0.13694376881252696,
+      "mean[Aphanizomenon_sp]": 0.43958744412601175,
+      "sd[Aphanizomenon_sp]": 0.09063497311985791,
+      "mean[M_rubrum]": 0.49967712425458827,
+      "sd[M_rubrum]": 0.11000047396785816
+    },
+    {
+      "feature": "orientation_order",
+      "description": "Orientation order R",
+      "separability": 0.06699300699300692,
+      "mean_pairwise_auc": 0.618157163349471,
+      "eta2": 0.0630769491843752,
+      "kruskal_H": 24.20043789163242,
+      "kruskal_p": 5.558296142729944e-06,
+      "mean[N_scintillans]": 0.7459391227840645,
+      "sd[N_scintillans]": 0.1836183551602617,
+      "mean[Aphanizomenon_sp]": 0.6260690722918968,
+      "sd[Aphanizomenon_sp]": 0.19786869928159567,
+      "mean[M_rubrum]": 0.6414299107925605,
+      "sd[M_rubrum]": 0.22745437795962337
+    },
+    {
+      "feature": "fractal_dimension",
+      "description": "Fractal dimension (box counting)",
+      "separability": 0.06586538461538471,
+      "mean_pairwise_auc": 0.7362191814595661,
+      "eta2": 0.186961245665557,
+      "kruskal_H": 117.25502440027304,
+      "kruskal_p": 3.4545776883017285e-26,
+      "mean[N_scintillans]": 1.1128231496996952,
+      "sd[N_scintillans]": 0.5272043151334551,
+      "mean[Aphanizomenon_sp]": 1.5638724251708358,
+      "sd[Aphanizomenon_sp]": 0.2989675302605159,
+      "mean[M_rubrum]": 1.0737423746391608,
+      "sd[M_rubrum]": 0.6344356321861596
+    },
+    {
+      "feature": "junctions_per_100px",
+      "description": "Junctions per 100 skeleton px",
+      "separability": 0.030576923076923057,
+      "mean_pairwise_auc": 0.742389501524117,
+      "eta2": 0.3521934304063394,
+      "kruskal_H": 130.9806773955135,
+      "kruskal_p": 3.6133271607794844e-29,
+      "mean[N_scintillans]": 2.376927989812905,
+      "sd[N_scintillans]": 2.689741851271187,
+      "mean[Aphanizomenon_sp]": 5.590348586941419,
+      "sd[Aphanizomenon_sp]": 1.9944594244078937,
+      "mean[M_rubrum]": 2.0993523787656057,
+      "sd[M_rubrum]": 2.088990765368558
+    },
+    {
+      "feature": "junction_endpoint_ratio",
+      "description": "Junction / endpoint ratio",
+      "separability": 0.01596153846153847,
+      "mean_pairwise_auc": 0.7259021427290658,
+      "eta2": 0.3305643457527797,
+      "kruskal_H": 115.49485380278199,
+      "kruskal_p": 8.329350787394456e-26,
+      "mean[N_scintillans]": 0.30357648611697197,
+      "sd[N_scintillans]": 0.36288931227906857,
+      "mean[Aphanizomenon_sp]": 0.7661891697981824,
+      "sd[Aphanizomenon_sp]": 0.35607941159110357,
+      "mean[M_rubrum]": 0.2610569106095222,
+      "sd[M_rubrum]": 0.2914751996864973
+    }
+  ],
+  "selected_features": [
+    "glcm_contrast",
+    "lbp_entropy",
+    "glcm_correlation_decay",
+    "lbp_nonuniform_fraction"
+  ],
+  "cv_all_features": {
+    "scheme": "5-fold over tiles (optimistic: single image per class)",
+    "accuracy": 0.8892508143322475,
+    "confusion": {
+      "Aphanizomenon_sp": {
+        "Aphanizomenon_sp": 123,
+        "M_rubrum": 0,
+        "N_scintillans": 8
+      },
+      "M_rubrum": {
+        "Aphanizomenon_sp": 3,
+        "M_rubrum": 73,
+        "N_scintillans": 3
+      },
+      "N_scintillans": {
+        "Aphanizomenon_sp": 16,
+        "M_rubrum": 4,
+        "N_scintillans": 77
+      }
+    }
+  },
+  "cv_selected_features": {
+    "scheme": "5-fold over tiles (optimistic: single image per class)",
+    "accuracy": 0.8040345821325648,
+    "confusion": {
+      "Aphanizomenon_sp": {
+        "Aphanizomenon_sp": 120,
+        "M_rubrum": 0,
+        "N_scintillans": 13
+      },
+      "M_rubrum": {
+        "Aphanizomenon_sp": 3,
+        "M_rubrum": 83,
+        "N_scintillans": 15
+      },
+      "N_scintillans": {
+        "Aphanizomenon_sp": 20,
+        "M_rubrum": 17,
+        "N_scintillans": 76
+      }
+    }
+  },
+  "whole_image": {
+    "N_scintillans.png": {
+      "filament_fraction": 0.07312455569274516,
+      "skeleton_density": 19.70292213866128,
+      "junction_endpoint_ratio": 0.8652482269503546,
+      "junctions_per_100px": 4.633497911127991,
+      "branch_length_median": 6.0,
+      "n_cells": 25.0,
+      "coherence_mean": 0.5227972892618361,
+      "orientation_order": 0.473632476264364,
+      "n_eddies": 1.0,
+      "eddy_max_significance": 3.571,
+      "eddy_dominant_radius_rel": 0.33220338983050846,
+      "eddy_dominant_alignment": 0.726,
+      "glcm_correlation_decay": 0.6615260181193064,
+      "lbp_entropy": 3.2195579433131436,
+      "lbp_nonuniform_fraction": 0.16847382796423094,
+      "fractal_dimension": 1.4055320057899396,
+      "lacunarity": 4.410647450246879,
+      "spectral_slope": -2.3371675576532787,
+      "label": "N_scintillans"
+    },
+    "Aphanizomenon_sp.png": {
+      "filament_fraction": 0.2726697503927387,
+      "skeleton_density": 82.23511956711468,
+      "junction_endpoint_ratio": 1.3096446700507614,
+      "junctions_per_100px": 6.845317060228178,
+      "branch_length_median": 5.0,
+      "n_cells": 279.0,
+      "coherence_mean": 0.4422610436762164,
+      "orientation_order": 0.2760148263443405,
+      "n_eddies": 3.0,
+      "eddy_max_significance": 2.138,
+      "eddy_dominant_radius_rel": 0.12759643916913946,
+      "eddy_dominant_alignment": 0.5843,
+      "glcm_correlation_decay": 0.7143298273548159,
+      "lbp_entropy": 3.244849617318386,
+      "lbp_nonuniform_fraction": 0.19894942398324314,
+      "fractal_dimension": 1.7581675789244589,
+      "lacunarity": 1.5719666124311729,
+      "spectral_slope": -2.4195377738667307,
+      "label": "Aphanizomenon_sp"
+    },
+    "M_rubrum.png": {
+      "filament_fraction": 0.11370136882351224,
+      "skeleton_density": 26.150658144353965,
+      "junction_endpoint_ratio": 0.7761194029850746,
+      "junctions_per_100px": 4.352678571428571,
+      "branch_length_median": 7.0,
+      "n_cells": 23.0,
+      "coherence_mean": 0.5114069997187767,
+      "orientation_order": 0.25669192229182886,
+      "n_eddies": 1.0,
+      "eddy_max_significance": 2.516,
+      "eddy_dominant_radius_rel": 0.17592592592592593,
+      "eddy_dominant_alignment": 0.6696,
+      "glcm_correlation_decay": 0.9708472118883303,
+      "lbp_entropy": 3.1736053814243483,
+      "lbp_nonuniform_fraction": 0.1538904941190205,
+      "fractal_dimension": 1.5792525081294544,
+      "lacunarity": 3.447142662026305,
+      "spectral_slope": -2.9488575401539325,
+      "label": "M_rubrum"
+    }
+  },
+  "notes": [
+    "Each class has a single image: tile-level accuracy is optimistic because tiles of one image are correlated. Provide >= 2 images per class (same label) for a leave-one-image-out estimate.",
+    "Images were analysed on different channels (G, R); intensities are percentile-normalised, but colour itself is not compared.",
+    "Images differ in size and no pixel size was given: length-based metrics (branch length, eddy radius) are in pixels and may not be comparable."
+  ]
+}

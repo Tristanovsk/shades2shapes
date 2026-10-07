@@ -1,0 +1,47 @@
+shades2shapes discrimination
+  3 image(s), 3 class(es), 347 tiles
+  - [N_scintillans] N_scintillans.png (channel G, 104 tiles)
+  - [Aphanizomenon_sp] Aphanizomenon_sp.png (channel R, 143 tiles)
+  - [M_rubrum] M_rubrum.png (channel G, 100 tiles)
+
+Feature ranking (tile level; separability 0 = none, 1 = perfect)
+                feature  separability  mean_pairwise_auc  eta2
+          glcm_contrast         0.662              0.905 0.579
+            lbp_entropy         0.605              0.852 0.318
+       glcm_homogeneity         0.563              0.877 0.637
+ glcm_correlation_decay         0.379              0.839 0.442
+lbp_nonuniform_fraction         0.370              0.840 0.467
+             lacunarity         0.352              0.761 0.021
+      filament_fraction         0.160              0.755 0.404
+       skeleton_density         0.137              0.766 0.455
+
+Recommended feature set: glcm_contrast, lbp_entropy, glcm_correlation_decay, lbp_nonuniform_fraction
+LDA accuracy, all features: 88.9%  [5-fold over tiles (optimistic: single image per class)]
+LDA accuracy, selected set: 80.4%
+
+Whole-image comparison
+                         N_scintillans.png Aphanizomenon_sp.png M_rubrum.png
+filament_fraction                    0.073                0.273        0.114
+skeleton_density                    19.703               82.235       26.151
+junction_endpoint_ratio              0.865                1.310        0.776
+junctions_per_100px                  4.633                6.845        4.353
+branch_length_median                 6.000                5.000        7.000
+n_cells                             25.000              279.000       23.000
+coherence_mean                       0.523                0.442        0.511
+orientation_order                    0.474                0.276        0.257
+n_eddies                             1.000                3.000        1.000
+eddy_max_significance                3.571                2.138        2.516
+eddy_dominant_radius_rel             0.332                0.128        0.176
+eddy_dominant_alignment              0.726                0.584        0.670
+glcm_correlation_decay               0.662                0.714        0.971
+lbp_entropy                          3.220                3.245        3.174
+lbp_nonuniform_fraction              0.168                0.199        0.154
+fractal_dimension                    1.406                1.758        1.579
+lacunarity                           4.411                1.572        3.447
+spectral_slope                      -2.337               -2.420       -2.949
+label                        N_scintillans     Aphanizomenon_sp     M_rubrum
+
+Notes
+  * Each class has a single image: tile-level accuracy is optimistic because tiles of one image are correlated. Provide >= 2 images per class (same label) for a leave-one-image-out estimate.
+  * Images were analysed on different channels (G, R); intensities are percentile-normalised, but colour itself is not compared.
+  * Images differ in size and no pixel size was given: length-based metrics (branch length, eddy radius) are in pixels and may not be comparable.
