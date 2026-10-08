@@ -13,6 +13,13 @@ shades2shapes discriminate eddy.png mesh.png -o comparison/
 # Discriminate groups: repeat labels; channels can differ per image
 shades2shapes discriminate a1.png a2.png b1.png b2.png \
     --labels calm,calm,turbulent,turbulent --channel g,g,r,r --save-diagnoses
+
+# Georeferenced scenes (geo extra): pixel size from the CRS, maps saved as NetCDF
+shades2shapes diagnose scene.tif --channel B8 --unit m --save-maps
+
+# Same area at every level of a Zarr pyramid
+shades2shapes pyramid scene.zarr --variable Rrs --channel 665 --mask mask \
+    --transform log10 --bbox 612000,4790600,678000,4800600
 ```
 
 `s2s` is a short alias for `shades2shapes`, and `python -m shades2shapes` also works.
@@ -24,16 +31,17 @@ These options are shared by both commands:
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--channel` | `auto` | Band to analyse: `auto` (highest contrast), `r`, `g`, `b`, `gray`. For `discriminate`, one value for all images or a comma-separated list, one per image |
+| `--channel` | `auto` | Band to analyse: `auto` (highest contrast), `r`, `g`, `b`, `gray`, or a band or variable name of a GeoTIFF/NetCDF file. For `discriminate`, one value for all images or a comma-separated list, one per image |
 | `--dark-ridges` | off | Filaments are darker than the background |
 | `--mask-method` | `otsu` | Filament threshold: global `otsu`, or `local`, which keeps faint filaments better |
 | `--tensor-sigma` | 4 | Smoothing scale of the orientation field (px) |
 | `--no-eddies` | off | Skip eddy detection |
 | `--eddy-min-alignment` | 0.55 | Minimum tangential alignment of an eddy |
 | `--eddy-min-significance` | 1.5 | Minimum eddy significance |
-| `--pixel-size`, `--unit` | none, km | Also report lengths in physical units |
+| `--pixel-size`, `--unit` | none, km | Also report lengths in physical units. For georeferenced files the pixel size is read from the CRS |
 | `-o`, `--out` | `s2s_diagnosis` / `s2s_discrimination` | Output directory |
 | `--no-plot` | off | Do not write figures |
+| `--save-maps` | off | Also write the maps (mask, ridges, orientation...) as `<name>_maps.nc`, georeferenced for GeoTIFF/NetCDF inputs (with `discriminate`, together with `--save-diagnoses`) |
 
 These are specific to `discriminate`:
 
@@ -79,8 +87,8 @@ cfg = s2s.DiagnosisConfig(mask_method="local", pixel_size=0.03, unit="km")
 d = s2s.diagnose("bloom.png", config=cfg)
 ```
 
-Inputs can be file paths, NumPy arrays (`H×W` or `H×W×3`) or, for `discriminate`,
-existing `Diagnosis` objects.
+Inputs can be file paths, NumPy arrays (`H×W` or `H×W×3`), georeferenced images (see
+{ref}`satellite-images`) or, for `discriminate`, existing `Diagnosis` objects.
 
 ### Discriminate images or groups
 
@@ -109,6 +117,104 @@ tiles = s2s.tile_features(new).dropna(subset=r.selected)
 tiles["pred"] = r.cv_selected["model"].predict(tiles[r.selected].to_numpy())
 tiles["pred"].value_counts(normalize=True)
 ```
+
+(satellite-images)=
+### Satellite images (xarray, GeoTIFF, NetCDF)
+
+With the `geo` extra (`pip install shades2shapes[geo]`), the input can be georeferenced:
+
+- an {class}`xarray.DataArray` with two spatial dimensions (`x`/`y` or `lon`/`lat`) and
+  at most one band dimension, in any order, e.g. `(band, y, x)` as read by
+  {func}`rioxarray.open_rasterio`. Other dimensions of size 1 (`time`) are dropped;
+- an {class}`xarray.Dataset`: `channel` names the variable (e.g. `"chlor_a"`); to
+  analyse several variables as bands, stack them with
+  `ds[["B4", "B3", "B2"]].to_array("band")`;
+- the path of a GeoTIFF (`.tif`, `.jp2`, `.vrt`) or NetCDF (`.nc`) file
+  ({func}`~shades2shapes.geo.open_geo`).
+
+```python
+import rioxarray
+
+da = rioxarray.open_rasterio("S2_scene.tif", masked=True)    # (band, y, x), UTM
+da = da.rio.clip_box(minx, miny, maxx, maxy)                  # area of interest
+d = s2s.diagnose(da, channel="B8", unit="m")
+print(d.summary())
+```
+
+Compared with a plain image:
+
+- any number of bands is accepted; `channel` can be a band name (a value of the band
+  coordinate, or the 1-based band number of a GeoTIFF without band descriptions) and
+  `"auto"` picks the band with the highest contrast;
+- the image is analysed north-up (it is flipped if the y coordinate increases);
+- in a projected CRS, the pixel size is derived from the coordinates in the requested
+  `unit` (`"m"` or `"km"`), unless `pixel_size` is given, so the `_phys` metrics are
+  always computed;
+- each {class}`~shades2shapes.Eddy` gets its centre in map coordinates (`x_map`,
+  `y_map`) and, when the CRS is known, in longitude and latitude (`lon`, `lat`);
+- `Diagnosis.geo` holds the georeferencing
+  ({class}`~shades2shapes.geo.GeoInfo`), and {meth}`~shades2shapes.Diagnosis.to_xarray`
+  returns the maps on the image grid, with the CRS attached:
+
+```python
+d.eddies[0].lon, d.eddies[0].lat
+ds = d.to_xarray()        # band, ridges, mask, skeleton, junctions, coherence, orientation
+ds.to_netcdf("S2_maps.nc")
+ds.mask.rio.to_raster("S2_mask.tif")
+```
+
+{func}`~shades2shapes.discriminate` accepts the same inputs, and `channels` can be
+band names.
+
+Limitations:
+
+- **geographic coordinates** (degrees): the pixel size is not set (with a warning),
+  because it varies with latitude. Reproject first:
+  `da = da.rio.reproject(da.rio.estimate_utm_crs())`, or pass `pixel_size`;
+- **no-data** (NaN: land, clouds, scene borders) is not supported yet and raises an
+  error: crop the image to a valid area, or fill the gaps;
+- scenes are loaded in memory: crop large scenes to the area of interest.
+
+(pyramids)=
+### Pyramids: several resolutions
+
+{func}`~shades2shapes.diagnose_pyramid` diagnoses the same area at every level of an
+image pyramid, e.g. a Zarr store whose groups `0, 1, 2...` are 2, 4... times coarser
+(read from its `multiscales` attribute), and returns a
+{class}`~shades2shapes.PyramidDiagnosis`:
+
+```python
+p = s2s.diagnose_pyramid("S2_GRS.zarr", variable="Rrs", channel="665", mask="mask",
+                         transform="log10", bbox=(612000, 4790600, 678000, 4800600))
+print(p.summary())
+p.levels            # pixel size, shape, no-data fraction and status of each level
+p.metrics_table()   # all metrics, one row per level
+p.eddy_tracks       # eddies matched across levels (same place, similar radius)
+p.diagnoses["1"]    # the Diagnosis of one level
+p.save("pyramid/")  # tables, JSON and figures (pyramid.png, metrics_by_level.png)
+```
+
+- The source can also be a dict or list of levels (xarray objects or arrays), or a
+  single image, which is then block-averaged by `factors` (default 1, 2, 4, 8, 16).
+- `bbox` cuts the same area from every level, in map coordinates or in `bbox_crs`
+  (e.g. `"EPSG:4326"` for longitudes and latitudes).
+- No-data: `mask` names a variable flagging invalid pixels (clouds, land), in addition
+  to NaN. Invalid pixels are filled from their neighbours
+  ({func}`~shades2shapes.geo.fill_nodata`); levels with more than `max_nodata` (25 %)
+  invalid pixels are skipped, so crop out land with `bbox`.
+- Levels smaller than `min_size` (64 px) are skipped: eddies need room.
+- `transform="log10"` helps with reflectances or concentrations spanning orders of
+  magnitude, where a bright coastal band would otherwise saturate the stretch.
+
+An eddy found at several levels, at the same place and with a similar radius
+(`max_shift`, `max_ratio`), is more robust than one seen at a single level. Most
+metrics depend on the pixel size: finer levels resolve smaller filaments, but also more
+noise. Compare images at the same level, and use the trends across levels
+({meth}`~shades2shapes.PyramidDiagnosis.plot_metrics`) to see at which scales the
+structures appear. The {doc}`pyramid example <examples/s2_pyramid_example>` analyses a
+Sentinel-2 scene this way, and the {doc}`Uroglena example
+<examples/uroglena_planetscope_example>` the 2021 bloom in Lake Geneva on PlanetScope
+images.
 
 ### In a notebook
 

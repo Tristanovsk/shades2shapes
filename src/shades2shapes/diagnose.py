@@ -15,7 +15,8 @@ import numpy as np
 
 from . import features as F
 from .eddies import Eddy, detect_eddies
-from .preprocessing import ArrayLike, prepare
+from .geo import GeoInfo, is_xarray, source_name
+from .preprocessing import ArrayLike, normalize, prepare
 
 
 @dataclass
@@ -67,9 +68,11 @@ class DiagnosisConfig:
         Minimum fraction of the eddy disk lying inside the image.
     pixel_size : float, optional
         Physical size of a pixel. When given, lengths are also reported in `unit`
-        (metrics ending in ``_phys``).
+        (metrics ending in ``_phys``). For georeferenced images in a projected CRS, it
+        is derived from the georeferencing when not given.
     unit : str
-        Unit of `pixel_size`, used in reports.
+        Unit of `pixel_size`, used in reports (``'m'`` or ``'km'`` for georeferenced
+        images).
     """
 
     channel: str = "auto"            # 'auto', 'r', 'g', 'b', 'gray'
@@ -101,7 +104,7 @@ class Diagnosis:
     Attributes
     ----------
     source : str
-        File path of the image, or ``'<array>'``.
+        File path of the image, or ``'<array>'`` / ``'<xarray>'``.
     channel : str
         Band actually analysed (``'R'``, ``'G'``, ``'B'``, ``'gray'``...).
     shape : tuple of int
@@ -128,6 +131,9 @@ class Diagnosis:
         Local filament orientation (radians).
     coherence : numpy.ndarray
         Local orientation coherence in [0, 1] (0 = isotropic, 1 = parallel filaments).
+    geo : GeoInfo or None
+        Georeferencing (:class:`~shades2shapes.geo.GeoInfo`), for georeferenced inputs.
+        The arrays are then north-up.
     """
 
     source: str
@@ -144,17 +150,73 @@ class Diagnosis:
     graph: dict = field(repr=False, default=None)
     theta: np.ndarray = field(repr=False, default=None)
     coherence: np.ndarray = field(repr=False, default=None)
+    geo: Optional[GeoInfo] = field(repr=False, default=None)
 
     # ------------------------------------------------------------------ export
     def to_dict(self):
-        """Serialisable summary: source, channel, shape, metrics, eddies and config.
+        """Serialisable summary: source, channel, shape, metrics, eddies and config, plus
+        the georeferencing (``geo``) for georeferenced images.
 
-        The arrays (band, mask, orientation field...) are not included.
+        The arrays (band, mask, orientation field...) are not included; see
+        :meth:`to_xarray`.
         """
         cfg = {k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(self.config).items()}
-        return {"source": self.source, "channel": self.channel, "shape": list(self.shape),
-                "metrics": self.metrics, "eddies": [e.to_dict() for e in self.eddies],
-                "config": cfg}
+        out = {"source": self.source, "channel": self.channel, "shape": list(self.shape),
+               "metrics": self.metrics, "eddies": [e.to_dict() for e in self.eddies],
+               "config": cfg}
+        if self.geo is not None:
+            out["geo"] = self.geo.to_dict()
+        return out
+
+    def to_xarray(self):
+        """Maps of the diagnosis as an :class:`xarray.Dataset` on the image grid.
+
+        Variables: ``band`` (analysed band, normalised), ``ridges``, ``mask``,
+        ``skeleton``, ``junctions``, ``coherence`` and ``orientation`` (degrees
+        counter-clockwise from the x axis, i.e. from east for north-up images, in
+        [0, 180)). For georeferenced images the coordinates are the map coordinates and,
+        with rioxarray, the CRS is attached, so the result can be written to NetCDF
+        (``ds.to_netcdf(...)``) or GeoTIFF (``ds.rio.to_raster(...)``). Otherwise the
+        coordinates are pixel indices. Source, channel and scalar metrics are stored as
+        attributes, and the eddies as a JSON string (attribute ``eddies``).
+
+        Requires xarray (``pip install shades2shapes[geo]``).
+
+        Returns
+        -------
+        xarray.Dataset
+        """
+        from .geo import _import_xarray
+        xr = _import_xarray()
+        H, W = self.shape
+        g = self.geo
+        xd, yd = (g.x_dim, g.y_dim) if g is not None else ("x", "y")
+        coords = ({xd: g.x, yd: g.y} if g is not None
+                  else {"x": np.arange(W), "y": np.arange(H)})
+        dims = (yd, xd)
+        variables = {
+            "band": (self.band, "analysed band, normalised to [0, 1]", "1"),
+            "ridges": (self.ridges, "Sato ridge response", "1"),
+            "mask": (self.mask.astype(np.uint8), "filament mask", "1"),
+            "skeleton": (self.graph["skeleton"].astype(np.uint8), "filament skeleton", "1"),
+            "junctions": (self.graph["junctions"].astype(np.uint8), "skeleton junctions", "1"),
+            "coherence": (self.coherence, "orientation coherence", "1"),
+            "orientation": (np.degrees(self.theta) % 180.0,
+                            "filament orientation, counter-clockwise from the x axis", "degree"),
+        }
+        ds = xr.Dataset({k: (dims, v, {"long_name": ln, "units": u})
+                         for k, (v, ln, u) in variables.items()}, coords=coords)
+        attrs = {"source": self.source, "channel": self.channel, "software": "shades2shapes"}
+        for k, v in self.scalar_metrics().items():
+            if isinstance(v, (bool, np.bool_)):
+                attrs[k] = int(v)
+            elif isinstance(v, (int, float, np.integer, np.floating)):
+                attrs[k] = float(v) if isinstance(v, (float, np.floating)) else int(v)
+        attrs["eddies"] = json.dumps([e.to_dict() for e in self.eddies], default=float)
+        ds.attrs.update(attrs)
+        if g is not None and g.crs is not None and hasattr(ds, "rio"):
+            ds = ds.rio.set_spatial_dims(x_dim=xd, y_dim=yd).rio.write_crs(g.crs)
+        return ds
 
     def to_json(self, path=None, indent=2):
         """JSON version of :meth:`to_dict`.
@@ -192,6 +254,11 @@ class Diagnosis:
         L = []
         L.append(f"shades2shapes diagnosis: {self.source}")
         L.append(f"  image {W}x{H} px, channel {self.channel}")
+        if self.geo is not None:
+            g = self.geo
+            dx, dy = g.resolution
+            L.append(f"  georeferenced: {g.crs or 'unknown CRS'}, pixel {abs(dx):.6g} x "
+                     f"{abs(dy):.6g} {g.units or 'map units'}")
         L.append("Filaments")
         L.append(f"  filament fraction       {m['filament_fraction']:.3f}")
         L.append(f"  skeleton density        {m['skeleton_density']:.1f} px / 1000 px^2")
@@ -211,6 +278,10 @@ class Diagnosis:
             for i, e in enumerate(self.eddies, 1):
                 L.append(f"  #{i}: centre ({e.x:.0f}, {e.y:.0f}) px, radius {e.radius:.0f} px,"
                          f" alignment {e.alignment:.2f}, significance {e.significance:.2f}")
+                if e.lon is not None:
+                    L.append(f"      at lon {e.lon:.5f}, lat {e.lat:.5f}")
+                elif e.x_map is not None:
+                    L.append(f"      at x {e.x_map:.6g}, y {e.y_map:.6g} (map coordinates)")
         else:
             L.append("  none detected")
         L.append("Texture")
@@ -261,7 +332,10 @@ class Diagnosis:
 
         H, W = self.shape
         fig, ax = plt.subplots(2, 3, figsize=(15, 15 * H / W * 2 / 3 + 1.2))
-        ax[0, 0].imshow(self.rgb if self.rgb is not None else self.band, cmap="gray")
+        rgb = self.rgb
+        if rgb is not None and self.geo is not None:   # e.g. reflectances: stretch for display
+            rgb = np.dstack([normalize(rgb[..., i]) for i in range(3)])
+        ax[0, 0].imshow(rgb if rgb is not None else self.band, cmap="gray")
         ax[0, 0].set_title(f"Original (analysed channel: {self.channel})")
         ax[0, 1].imshow(self.ridges, cmap="magma")
         ax[0, 1].set_title("Ridge response (Sato)")
@@ -307,9 +381,12 @@ def diagnose(source: ArrayLike, config: Optional[DiagnosisConfig] = None, **kwar
 
     Parameters
     ----------
-    source : str, pathlib.Path or numpy.ndarray
+    source : str, pathlib.Path, numpy.ndarray, xarray.DataArray or xarray.Dataset
         Image file, or array of shape ``(H, W)`` or ``(H, W, 3)`` (an alpha channel is
-        dropped). Integer arrays are scaled to [0, 1].
+        dropped). Integer arrays are scaled to [0, 1]. Georeferenced images (xarray
+        objects, GeoTIFF and NetCDF files; see :mod:`shades2shapes.geo`) can have any
+        number of bands, and `channel` can be a band name. Their pixel size and the map
+        coordinates of the eddies are derived from the georeferencing.
     config : DiagnosisConfig, optional
         Options. Defaults to ``DiagnosisConfig()``.
     **kwargs
@@ -337,7 +414,9 @@ def diagnose(source: ArrayLike, config: Optional[DiagnosisConfig] = None, **kwar
             raise TypeError(f"Unknown option '{k}'")
         setattr(cfg, k, v)
 
-    band, rgb, ch = prepare(source, cfg.channel, cfg.stretch)
+    band, rgb, ch, geo = prepare(source, cfg.channel, cfg.stretch)
+    if geo is not None and cfg.pixel_size is None:
+        cfg.pixel_size = geo.pixel_size(cfg.unit)
     if not cfg.bright_ridges:
         band = 1.0 - band
     H, W = band.shape
@@ -362,6 +441,13 @@ def diagnose(source: ArrayLike, config: Optional[DiagnosisConfig] = None, **kwar
                                min_significance=cfg.eddy_min_significance,
                                min_relative_significance=cfg.eddy_min_relative_significance,
                                min_inside=cfg.eddy_min_inside)
+    if geo is not None:
+        for e in eddies:
+            x, y = geo.xy(e.x, e.y)
+            e.x_map, e.y_map = float(x), float(y)
+            lon, lat = geo.lonlat(e.x, e.y)
+            if lon is not None:
+                e.lon, e.lat = round(float(lon), 6), round(float(lat), 6)
     m["n_eddies"] = len(eddies)
     dom = eddies[0] if eddies else None
     m["eddy_max_significance"] = dom.significance if dom else 0.0
@@ -383,7 +469,10 @@ def diagnose(source: ArrayLike, config: Optional[DiagnosisConfig] = None, **kwar
         m["skeleton_density_phys"] = m["skeleton_length_px"] * p / (H * W * p * p)
         m["eddy_dominant_radius_phys"] = m["eddy_dominant_radius"] * p
 
-    name = str(source) if isinstance(source, (str, Path)) else "<array>"
+    if isinstance(source, (str, Path)):
+        name = str(source)
+    else:
+        name = source_name(source) if is_xarray(source) else "<array>"
     return Diagnosis(source=name, channel=ch, shape=(H, W), metrics=m, eddies=eddies,
                      config=cfg, band=band, rgb=rgb, ridges=ridges, mask=mask, graph=graph,
-                     theta=theta, coherence=coh)
+                     theta=theta, coherence=coh, geo=geo)

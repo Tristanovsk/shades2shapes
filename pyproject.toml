@@ -10,7 +10,8 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Tristan Harmel" }]
-keywords = ["image analysis", "texture", "ocean color", "phytoplankton", "eddies", "filaments"]
+keywords = ["image analysis", "texture", "ocean color", "phytoplankton", "eddies", "filaments",
+            "satellite", "xarray"]
 dependencies = [
     "numpy>=1.22",
     "scipy>=1.8",
@@ -22,6 +23,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+geo = ["xarray>=2022.6", "rioxarray>=0.13", "netCDF4", "zarr"]
 docs = [
     "sphinx>=7",
     "sphinx-book-theme>=1.1",

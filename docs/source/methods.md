@@ -10,7 +10,8 @@ are also given in physical units (keys ending in `_phys`).
 One band is analysed: the band with the highest 5–95 % percentile spread (`auto`) or
 the one requested. It is percentile-normalised (1–99 %) to [0, 1], so that images from
 different sensors or channels are comparable. With `bright_ridges=False` the band is
-inverted, for dark filaments.
+inverted, for dark filaments. Georeferenced images are first put north-up, and their
+pixel size is taken from the coordinates (see {ref}`satellite-images`).
 
 ## Filaments
 
@@ -142,6 +143,10 @@ Sample size
 : Validate discrimination on several images per class. Tile-level accuracy from a single
   image per class overstates real performance, because tiles of one image are
   correlated.
+
+No-data
+: NaN pixels (land, clouds, scene borders) are not supported yet: crop the image to a
+  valid area or fill the gaps before the analysis.
 
 Image quality
 : Texture features also respond to blur, compression and resolution. Differences

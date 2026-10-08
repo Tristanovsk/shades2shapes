@@ -74,7 +74,9 @@ napoleon_type_aliases = {
     name: f'~shades2shapes.{name}'
     for name in ('Diagnosis', 'DiagnosisConfig', 'DiscriminationResult', 'Eddy')
 }
+napoleon_type_aliases['GeoInfo'] = '~shades2shapes.geo.GeoInfo'
 napoleon_type_aliases['sequence'] = ':term:`sequence`'
+napoleon_type_aliases['callable'] = ':term:`callable`'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
@@ -84,6 +86,8 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/stable', None),
     'skimage': ('https://scikit-image.org/docs/stable', None),
     'sklearn': ('https://scikit-learn.org/stable', None),
+    'xarray': ('https://docs.xarray.dev/en/stable', None),
+    'rioxarray': ('https://corteva.github.io/rioxarray/stable', None),
 }
 
 # -- Options for HTML output -------------------------------------------------
@@ -102,14 +106,14 @@ html_theme_options = {
     'navigation_with_keys': True,
     'show_toc_level': 2,
     'logo': {
-        'image_light': '_static/logo.png',
-        'image_dark': '_static/logo_dark.png',
+        'image_light': '_static/logo.svg',
+        'image_dark': '_static/logo_dark.svg',
     },
 }
 
 html_title = 'shades2shapes'
-html_logo = '_static/logo.png'
-html_favicon = '_static/icon_dark.png'
+html_logo = '_static/logo.svg'
+html_favicon = '_static/icon_dark.svg'
 
 html_static_path = ['_static']
 html_show_sourcelink = False
@@ -133,6 +137,10 @@ myst_heading_anchors = 3
 # Read the Docs). Outputs are cached in docs/build/.jupyter_cache and reused
 # until the notebook changes. A failing notebook fails the build.
 nb_execution_mode = 'cache'
+# The satellite examples need images that are not distributed (Sentinel-2 scene,
+# PlanetScope images under licence): they are rendered with the outputs stored in
+# the notebooks.
+nb_execution_excludepatterns = ['*s2_pyramid_example*', '*uroglena_planetscope_example*']
 nb_execution_cache_path = str(DOCS_SOURCE.parent / 'build' / '.jupyter_cache')
 nb_execution_timeout = 600
 nb_execution_raise_on_error = True

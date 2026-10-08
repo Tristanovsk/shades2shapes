@@ -13,5 +13,11 @@ sphinx-copybutton
 linkify-it-py
 ipykernel
 
+[geo]
+xarray>=2022.6
+rioxarray>=0.13
+netCDF4
+zarr
+
 [test]
 pytest

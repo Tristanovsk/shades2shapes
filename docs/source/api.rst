@@ -21,18 +21,20 @@ Diagnose and discriminate
 
    diagnose
    discriminate
+   diagnose_pyramid
 
 Results and options
 -------------------
 
 .. autosummary::
    :toctree: generated
-   :template: class.rst
+   :template: autosummary/class.rst
    :nosignatures:
 
    Diagnosis
    DiagnosisConfig
    DiscriminationResult
+   PyramidDiagnosis
    Eddy
 
 Building blocks
@@ -62,3 +64,5 @@ Lower-level modules
    api/eddies
    api/statistics
    api/preprocessing
+   api/geo
+   api/multiscale

@@ -8,6 +8,8 @@ src/shades2shapes/diagnose.py
 src/shades2shapes/discriminate.py
 src/shades2shapes/eddies.py
 src/shades2shapes/features.py
+src/shades2shapes/geo.py
+src/shades2shapes/multiscale.py
 src/shades2shapes/preprocessing.py
 src/shades2shapes.egg-info/PKG-INFO
 src/shades2shapes.egg-info/SOURCES.txt
@@ -15,4 +17,6 @@ src/shades2shapes.egg-info/dependency_links.txt
 src/shades2shapes.egg-info/entry_points.txt
 src/shades2shapes.egg-info/requires.txt
 src/shades2shapes.egg-info/top_level.txt
+tests/test_geo.py
+tests/test_multiscale.py
 tests/test_shades2shapes.py

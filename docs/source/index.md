@@ -1,17 +1,21 @@
 # shades2shapes
 
-```{image} _static/shades2shapes.png
+```{image} _static/name.svg
 :alt: shades2shapes
 :width: 560px
-:align: center
+:align: left
 :class: only-light
 ```
 
-```{image} _static/shades2shapes_dark.png
+```{image} _static/name_dark.svg
 :alt: shades2shapes
 :width: 560px
-:align: center
+:align: left
 :class: only-dark
+```
+
+```{raw} html
+<div style="clear: both; margin-bottom: 1em;"></div>
 ```
 
 **shades2shapes** turns the *shades* of an image into *shapes*: quantitative descriptors
@@ -19,7 +23,7 @@ of the spatial patterns formed by filaments, networks and eddies. It is designed
 ocean-colour and true-colour images of phytoplankton or cyanobacteria blooms, and works
 on any image of bright (or dark) filamentous structures.
 
-It provides two tools, available from the command line and from Python:
+It provides three tools, available from the command line and from Python:
 
 `diagnose`
 : Full spatial diagnosis of one image: filaments, network topology, orientation,
@@ -28,6 +32,13 @@ It provides two tools, available from the command line and from Python:
 `discriminate`
 : Compares two or more images, or groups of images. Ranks the features that separate
   them, recommends a compact non-redundant feature set and cross-validates a classifier.
+
+`diagnose_pyramid`
+: Diagnoses the same area at every level of an image pyramid (e.g. a Zarr store of a
+  satellite scene) and matches the eddies found at several resolutions.
+
+Images can be PNG/JPEG files, NumPy arrays or georeferenced xarray objects, GeoTIFF
+and NetCDF files.
 
 ```python
 import shades2shapes as s2s
@@ -48,6 +59,8 @@ installation
 usage
 methods
 examples/shades2shapes_example
+examples/s2_pyramid_example
+examples/uroglena_planetscope_example
 ```
 
 ```{toctree}

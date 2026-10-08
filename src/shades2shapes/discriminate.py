@@ -323,9 +323,9 @@ class DiscriminationResult:
         L = ["shades2shapes discrimination",
              f"  {len(self.diagnoses)} image(s), {len(set(self.labels))} class(es), "
              f"{len(self.tiles)} tiles"]
-        for d, lab in zip(self.diagnoses, self.labels):
-            n = int((self.tiles['image'] == Path(d.source).name).sum())
-            L.append(f"  - [{lab}] {Path(d.source).name} (channel {d.channel}, {n} tiles)")
+        for d, lab, name in zip(self.diagnoses, self.labels, self.image_table.columns):
+            n = int((self.tiles['image'] == name).sum())
+            L.append(f"  - [{lab}] {name} (channel {d.channel}, {n} tiles)")
         L.append("\nFeature ranking (tile level; separability 0 = none, 1 = perfect)")
         cols = ["feature", "separability", "mean_pairwise_auc", "eta2"]
         if "cohen_d" in self.ranking:
@@ -508,13 +508,15 @@ def discriminate(images: Sequence, labels: Optional[Sequence[str]] = None,
 
     Parameters
     ----------
-    images : sequence of str, pathlib.Path, numpy.ndarray or Diagnosis
-        Images to compare. Already computed :class:`Diagnosis` objects are reused.
+    images : sequence of str, pathlib.Path, numpy.ndarray, xarray.DataArray, xarray.Dataset or Diagnosis
+        Images to compare (any input of :func:`~shades2shapes.diagnose`). Already
+        computed :class:`Diagnosis` objects are reused.
     labels : sequence of str, optional
         Class of each image (default: one class per image, named after the file). Give
         the same label to several images to discriminate groups.
     channels : sequence of str, optional
-        Channel of each image (``'auto'``, ``'r'``, ``'g'``, ``'b'``, ``'gray'``).
+        Channel of each image (``'auto'``, ``'r'``, ``'g'``, ``'b'``, ``'gray'``, or a
+        band name for georeferenced images).
         Ignored for Diagnosis inputs. Default: `config` / `diag_kwargs`, else ``'auto'``.
     tile : int
         Tile size (px).
@@ -558,7 +560,7 @@ def discriminate(images: Sequence, labels: Optional[Sequence[str]] = None,
                 kw["channel"] = channels[i]
             d = diagnose(im, config=config, **kw)
         diags.append(d)
-        names.append(Path(d.source).name if d.source != "<array>" else f"image{i + 1}")
+        names.append(Path(d.source).name if not d.source.startswith("<") else f"image{i + 1}")
     if len(set(names)) < len(names):  # disambiguate duplicate file names
         names = [f"{i + 1}:{n}" for i, n in enumerate(names)]
     labels = list(labels) if labels is not None else names

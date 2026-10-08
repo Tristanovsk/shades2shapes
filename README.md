@@ -17,6 +17,7 @@ Two tools:
 ```bash
 pip install .            # from the unzipped folder
 pip install -e .[test]   # editable, with pytest
+pip install .[geo]       # with xarray/rioxarray/zarr, for satellite images (GeoTIFF, NetCDF, Zarr)
 ```
 
 Requires Python ≥ 3.9 with numpy, scipy, scikit-image, scikit-learn, pandas and matplotlib.
@@ -34,6 +35,13 @@ shades2shapes discriminate eddy.png mesh.png -o comparison/
 # Discriminate groups: repeat labels; channels can differ per image
 shades2shapes discriminate a1.png a2.png b1.png b2.png \
     --labels calm,calm,turbulent,turbulent --channel g,g,r,r --save-diagnoses
+
+# Georeferenced scenes (geo extra): pixel size from the CRS, maps saved as NetCDF
+shades2shapes diagnose scene.tif --channel B8 --unit m --save-maps
+
+# Same area at every level of a Zarr pyramid (eddies matched across levels)
+shades2shapes pyramid scene.zarr --variable Rrs --channel 665 --mask mask \
+    --transform log10 --bbox 612000,4790600,678000,4800600
 ```
 
 `s2s` is a short alias for `shades2shapes`. Run `shades2shapes diagnose -h` or
@@ -43,11 +51,12 @@ shades2shapes discriminate a1.png a2.png b1.png b2.png \
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--channel` | `auto` | Band to analyse: `auto` (highest contrast), `r`, `g`, `b`, `gray` |
+| `--channel` | `auto` | Band to analyse: `auto` (highest contrast), `r`, `g`, `b`, `gray`, or a band name of a GeoTIFF/NetCDF file |
 | `--dark-ridges` | off | Filaments are darker than the background |
 | `--mask-method` | `otsu` | `local` keeps faint filaments better |
 | `--tensor-sigma` | 4 | Smoothing scale of the orientation field (px) |
-| `--pixel-size`, `--unit` | none, km | Also report lengths in physical units |
+| `--pixel-size`, `--unit` | none, km | Also report lengths in physical units (default for georeferenced files: from the CRS) |
+| `--save-maps` | off | Also write the maps (mask, ridges, orientation...) as NetCDF |
 | `--no-eddies` | off | Skip eddy detection |
 | `--tile`, `--overlap` | 64, 0.5 | Tile size (px) and overlap for discrimination |
 | `--labels` | file names | Class of each image (`discriminate`) |
@@ -76,6 +85,56 @@ r.save("comparison/")
 ```
 
 Inputs can be file paths, NumPy arrays (H×W or H×W×3) or existing `Diagnosis` objects.
+
+### Satellite images (xarray)
+
+With the `geo` extra, inputs can also be georeferenced: an `xarray.DataArray` (e.g. read
+with `rioxarray.open_rasterio`, bands first as is usual), an `xarray.Dataset`, or a
+GeoTIFF/NetCDF file. Any number of bands is accepted and `channel` can be a band name.
+
+```python
+import rioxarray
+
+da = rioxarray.open_rasterio("S2_scene.tif", masked=True)    # (band, y, x), UTM
+da = da.rio.clip_box(minx, miny, maxx, maxy)                  # area of interest
+d = s2s.diagnose(da, channel="B8", unit="m")
+d.config.pixel_size        # 10.0, from the CRS
+d.eddies[0].lon, d.eddies[0].lat, d.eddies[0].x_map, d.eddies[0].y_map
+ds = d.to_xarray()         # georeferenced maps: mask, ridges, coherence, orientation...
+ds.to_netcdf("S2_maps.nc"); ds.mask.rio.to_raster("S2_mask.tif")
+```
+
+The image is analysed north-up. In geographic coordinates (degrees), the pixel size is
+not set: reproject first (`da.rio.reproject(da.rio.estimate_utm_crs())`). No-data
+pixels (NaN: land, clouds) are not supported yet: crop to a valid area or fill them
+(`shades2shapes.geo.fill_nodata`).
+
+### Pyramids (several resolutions)
+
+`diagnose_pyramid` diagnoses the same area at every level of an image pyramid (a Zarr
+store with groups `0, 1, 2...`, a list of levels, or one image coarsened by 2, 4...),
+fills flagged/NaN pixels, skips levels that are too small, and matches the eddies found
+at several levels:
+
+```python
+p = s2s.diagnose_pyramid("S2_GRS.zarr", variable="Rrs", channel="665", mask="mask",
+                         transform="log10", bbox=(612000, 4790600, 678000, 4800600))
+print(p.summary())
+p.eddy_tracks        # structures found at several resolutions
+p.metrics_table()    # metrics per level
+p.save("pyramid/")
+```
+
+The notebook `examples/s2_pyramid_example.ipynb` runs this on a Sentinel-2 GRS scene of
+the Rhône delta (tile 31TFJ, 23 May 2025), from 20 to 160 m. The scene is not included:
+point `S2_ZARR` to your own Zarr product.
+
+The notebook `examples/uroglena_planetscope_example.ipynb` analyses the bloom of the
+golden alga *Uroglena* in Lake Geneva on 6 September 2021, from PlanetScope SuperDove
+images (8 bands, 3 m): TOA reflectance, water mask, averaging to 12 m and pyramid
+analysis (12–96 m) of the central and western Grand Lac. Among other structures, it
+finds a gyre of 3.2 km radius in the western Grand Lac at three resolutions. The images
+are not included (Planet licence): point `PLANET_DIR` to your own order.
 
 ## What is measured
 
@@ -173,12 +232,14 @@ than the bloom pattern.
 - **Eddies are inferred from filament geometry, not flow.** For dynamics, combine with
   velocity fields (e.g. Okubo–Weiss or vorticity from altimetry). The rotation sense
   cannot be recovered from axial orientations.
+- **No-data.** NaN pixels (land, clouds, scene borders) raise an error: crop the image to
+  a valid area or fill them before the analysis.
 - **Sample size.** Validate discrimination on several images per class. Tile-level
   accuracy from a single image per class overstates real performance.
 
 ## Documentation
 
-The documentation (usage, methods, API reference and the example notebook) is in `docs/`
+The documentation (usage, methods, API reference and the example notebooks) is in `docs/`
 and is set up for Read the Docs (`.readthedocs.yaml`). To build it locally:
 
 ```bash

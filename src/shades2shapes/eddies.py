@@ -15,6 +15,7 @@ maximises it.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from typing import Optional
 
 import numpy as np
 from scipy.signal import fftconvolve
@@ -44,6 +45,15 @@ class Eddy:
         Fraction of the 8 angular sectors around the centre that contain filaments.
     profile : dict
         Alignment per annulus, ``{"r0-r1": value}`` (``None`` where too few filament pixels).
+    x_map : float, optional
+        Centre x in map coordinates, for georeferenced images
+        (:class:`~shades2shapes.geo.GeoInfo`).
+    y_map : float, optional
+        Centre y in map coordinates.
+    lon : float, optional
+        Centre longitude (degrees, WGS84), for georeferenced images with a known CRS.
+    lat : float, optional
+        Centre latitude (degrees, WGS84).
     """
 
     x: float
@@ -54,6 +64,10 @@ class Eddy:
     support: float       # weighted filament coverage of the disk
     coverage: float      # fraction of angular sectors containing filaments
     profile: dict        # alignment per annulus {"r0-r1": value}
+    x_map: Optional[float] = None   # centre in map coordinates (georeferenced images)
+    y_map: Optional[float] = None
+    lon: Optional[float] = None     # centre in degrees (WGS84)
+    lat: Optional[float] = None
 
     def to_dict(self):
         """Fields as a plain dict."""
